@@ -2,7 +2,6 @@
 	double linked list reverse
 	This problem requires you to reverse a doubly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -72,9 +71,50 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn reverse(&mut self){
-		// TODO
-	}
+        pub fn reverse(&mut self) {
+                // unsafe{(*self.end.unwrap().as_ptr()).next=(*self.end.unwrap().as_ptr()).prev;
+                //         (*self.end.unwrap().as_ptr()).prev=None;
+                // }
+                let d = self.start;
+                let mut a = unsafe { (*self.end.unwrap().as_ptr()).prev };
+                unsafe { (*self.end.unwrap().as_ptr()).prev = None; }
+                let mut b = self.end;
+                let mut i = 0;
+                while let Some(ptr) = b {
+                        // unsafe { println!("the b val is {:?}", (*ptr.as_ptr()).val); }
+
+                        if a == self.start {
+                                unsafe {
+                                        (*ptr.as_ptr()).next = a;
+                                        unsafe {
+                                                (*a.unwrap().as_ptr()).prev = b;
+                                                (*a.unwrap().as_ptr()).next = None;
+                                                break;
+                                        }
+                                }
+                        } else {
+                                unsafe {
+                                        (*ptr.as_ptr()).next = a;
+                                }
+                                let tmp = a;
+                                a = unsafe {
+                                        (*a.unwrap().as_ptr()).prev
+                                };
+                                unsafe {
+                                        (*tmp.unwrap().as_ptr()).prev = b;
+                                }
+                                b = tmp;
+                        }
+                }
+                // unsafe {
+                //         if let None = b {
+                //
+                //         }
+                // }
+
+                self.start = self.end;
+                self.end = d;
+        }
 }
 
 impl<T> Display for LinkedList<T>
