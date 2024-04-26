@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -10,100 +9,130 @@ use std::vec::*;
 
 #[derive(Debug)]
 struct Node<T> {
-    val: T,
-    next: Option<NonNull<Node<T>>>,
+        val: T,
+        next: Option<NonNull<Node<T>>>,
 }
 
 impl<T> Node<T> {
-    fn new(t: T) -> Node<T> {
-        Node {
-            val: t,
-            next: None,
+        fn new(t: T) -> Node<T> {
+                Node { val: t, next: None }
         }
-    }
 }
 #[derive(Debug)]
-struct LinkedList<T> {
-    length: u32,
-    start: Option<NonNull<Node<T>>>,
-    end: Option<NonNull<Node<T>>>,
+struct LinkedList<T>
+        where
+            T: PartialOrd+Clone,
+{
+        length: u32,
+        start: Option<NonNull<Node<T>>>,
+        end: Option<NonNull<Node<T>>>,
 }
 
-impl<T> Default for LinkedList<T> {
-    fn default() -> Self {
-        Self::new()
-    }
+impl<T> Default for LinkedList<T>
+        where
+            T: PartialOrd+Clone,
+{
+        fn default() -> Self {
+                Self::new()
+        }
 }
 
-impl<T> LinkedList<T> {
-    pub fn new() -> Self {
-        Self {
-            length: 0,
-            start: None,
-            end: None,
+impl<T> LinkedList<T>
+        where
+            T: PartialOrd+Clone,
+{
+        pub fn new() -> Self {
+                Self {
+                        length: 0,
+                        start: None,
+                        end: None,
+                }
         }
-    }
 
-    pub fn add(&mut self, obj: T) {
-        let mut node = Box::new(Node::new(obj));
-        node.next = None;
-        let node_ptr = Some(unsafe { NonNull::new_unchecked(Box::into_raw(node)) });
-        match self.end {
-            None => self.start = node_ptr,
-            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = node_ptr },
+        pub fn add(&mut self, obj: T) {
+                let mut node = Box::new(Node::new(obj));
+                node.next = None;
+                let node_ptr = Some(unsafe { NonNull::new_unchecked(Box::into_raw(node)) });
+                match self.end {
+                        None => self.start = node_ptr,
+                        Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = node_ptr },
+                }
+                self.end = node_ptr;
+                self.length += 1;
         }
-        self.end = node_ptr;
-        self.length += 1;
-    }
 
-    pub fn get(&mut self, index: i32) -> Option<&T> {
-        self.get_ith_node(self.start, index)
-    }
+        pub fn get(&mut self, index: i32) -> Option<&T> {
+                self.get_ith_node(self.start, index)
+        }
 
-    fn get_ith_node(&mut self, node: Option<NonNull<Node<T>>>, index: i32) -> Option<&T> {
-        match node {
-            None => None,
-            Some(next_ptr) => match index {
-                0 => Some(unsafe { &(*next_ptr.as_ptr()).val }),
-                _ => self.get_ith_node(unsafe { (*next_ptr.as_ptr()).next }, index - 1),
-            },
+        fn get_ith_node(&mut self, node: Option<NonNull<Node<T>>>, index: i32) -> Option<&T> {
+                match node {
+                        None => None,
+                        Some(next_ptr) => match index {
+                                0 => Some(unsafe { &(*next_ptr.as_ptr()).val }),
+                                _ => self.get_ith_node(unsafe { (*next_ptr.as_ptr()).next }, index - 1),
+                        },
+                }
         }
-    }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+        pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+                where T:PartialOrd+ PartialEq,
+        {
+                let mut merged = Self::new();
+                let mut ptr_a = list_a.start;
+                let mut ptr_b = list_b.start;
+
+                while ptr_a.is_some() && ptr_b.is_some() {
+                        let a_val = unsafe { &(*ptr_a.unwrap().as_ptr()).val };
+                        let b_val = unsafe { &(*ptr_b.unwrap().as_ptr()).val };
+
+                        if a_val <= b_val {
+                                merged.add(a_val.clone());
+                                ptr_a = unsafe{ (*ptr_a.unwrap().as_ptr()).next };
+
+                        } else {
+                                merged.add(b_val.clone());
+                                ptr_b = unsafe{(*ptr_b.unwrap().as_ptr()).next};
+                        }
+                }
+
+                while let  Some(ptr)= ptr_a{
+                        let a_val =  unsafe { &(*ptr.as_ptr()).val };
+                        merged.add(a_val.clone());
+                        ptr_a = unsafe { (*ptr.as_ptr()).next };
+                }
+
+                while let Some (ptr)= ptr_b{
+                        let b_val = unsafe{&(*ptr.as_ptr()).val};
+                        merged.add(b_val.clone());
+                        ptr_b = unsafe{(*ptr.as_ptr()).next}
+                }
+                merged
         }
-	}
 }
 
 impl<T> Display for LinkedList<T>
-where
-    T: Display,
+        where
+            T: Display + PartialOrd+Clone,
 {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self.start {
-            Some(node) => write!(f, "{}", unsafe { node.as_ref() }),
-            None => Ok(()),
+        fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+                match self.start {
+                        Some(node) => write!(f, "{}", unsafe { node.as_ref() }),
+                        None => Ok(()),
+                }
         }
-    }
 }
 
 impl<T> Display for Node<T>
-where
-    T: Display,
+        where
+            T: Display,
 {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self.next {
-            Some(node) => write!(f, "{}, {}", self.val, unsafe { node.as_ref() }),
-            None => write!(f, "{}", self.val),
+        fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+                match self.next {
+                        Some(node) => write!(f, "{}, {}", self.val, unsafe { node.as_ref() }),
+                        None => write!(f, "{}", self.val),
+                }
         }
-    }
 }
-
 #[cfg(test)]
 mod tests {
     use super::LinkedList;
